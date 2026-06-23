@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { Ticket } from "lucide-react"
-import { useMarketStore, selectInstrumentList } from "@/lib/store/marketStore"
+import { useMarketStore, computeInstrumentList } from "@/lib/store/marketStore"
 import { useToastStore } from "@/lib/store/toastStore"
 import type { OrderType, Side } from "@/lib/types"
 import { Panel } from "@/components/shared/panel"
@@ -20,7 +20,9 @@ import { fmtPrice } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 export function OrderTicket() {
-  const instruments = useMarketStore(selectInstrumentList)
+  const instrumentMap = useMarketStore((s) => s.instruments)
+  const order = useMarketStore((s) => s.order)
+  const instruments = useMemo(() => computeInstrumentList(instrumentMap, order), [instrumentMap, order])
   const submitOrder = useMarketStore((s) => s.submitOrder)
   const push = useToastStore((s) => s.push)
 

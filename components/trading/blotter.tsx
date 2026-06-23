@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { Receipt, Search } from "lucide-react"
-import { useMarketStore, selectInstrumentList } from "@/lib/store/marketStore"
+import { useMarketStore, computeInstrumentList } from "@/lib/store/marketStore"
 import type { Side } from "@/lib/types"
 import { Panel } from "@/components/shared/panel"
 import { Input } from "@/components/ui/input"
@@ -22,7 +22,9 @@ type SideFilter = "ALL" | Side
 
 export function Blotter() {
   const trades = useMarketStore((s) => s.trades)
-  const instruments = useMarketStore(selectInstrumentList)
+  const instrumentMap = useMarketStore((s) => s.instruments)
+  const order = useMarketStore((s) => s.order)
+  const instruments = useMemo(() => computeInstrumentList(instrumentMap, order), [instrumentMap, order])
 
   const [search, setSearch] = useState("")
   const [instrumentFilter, setInstrumentFilter] = useState("ALL")

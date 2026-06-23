@@ -11,7 +11,7 @@ import {
   YAxis,
 } from "recharts"
 import { Activity } from "lucide-react"
-import { useMarketStore, selectYieldCurve, selectSpread10s2s, selectAvgYield } from "@/lib/store/marketStore"
+import { useMarketStore, computeYieldCurve, computeSpread10s2s, computeAvgYield } from "@/lib/store/marketStore"
 import { Panel } from "@/components/shared/panel"
 import { cn } from "@/lib/utils"
 
@@ -51,10 +51,15 @@ function Metric({ label, value, tone }: { label: string; value: string; tone?: "
 
 export function YieldCurve() {
   // Subscribe to the derived curve; selectors keep this panel decoupled from raw state.
-  const curve = useMarketStore(selectYieldCurve)
-  const spread = useMarketStore(selectSpread10s2s)
-  const avgYield = useMarketStore(selectAvgYield)
+  // Subscribe to raw, stable state and derive locally to avoid creating new
+  // references inside the store selector (which breaks SSR getServerSnapshot).
+  const instruments = useMarketStore((s) => s.instruments)
+  const order = useMarketStore((s) => s.order)
   const volatility = useMarketStore((s) => s.volatility)
+
+  const curve = useMemo(() => computeYieldCurve(instruments, order), [instruments, order])
+  const spread = useMemo(() => computeSpread10s2s(instruments), [instruments])
+  const avgYield = useMemo(() => computeAvgYield(instruments), [instruments])
 
   const data = useMemo<CurveDatum[]>(
     () => curve.map((p) => ({ maturity: p.maturity, yield: p.yield })),

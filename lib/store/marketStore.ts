@@ -165,18 +165,24 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   setRunning: (running) => set({ running }),
 }))
 
-/* ----------------------------- Derived selectors ----------------------------- */
+/* ----------------------------- Derived helpers ----------------------------- *
+ * These are pure functions over raw state slices. Components subscribe to the
+ * stable `instruments`/`order` references and memoize these locally, so we never
+ * return freshly-allocated arrays from inside a zustand selector (which would
+ * break SSR's getServerSnapshot and cause render loops).                       */
+
+type InstrumentMap = Record<string, BondInstrument>
 
 /** Stable, ordered list of instruments. */
-export function selectInstrumentList(s: MarketState): BondInstrument[] {
-  return s.order.map((id) => s.instruments[id])
+export function computeInstrumentList(instruments: InstrumentMap, order: string[]): BondInstrument[] {
+  return order.map((id) => instruments[id])
 }
 
 /** Build the yield curve points in maturity order. */
-export function selectYieldCurve(s: MarketState): YieldPoint[] {
+export function computeYieldCurve(instruments: InstrumentMap, order: string[]): YieldPoint[] {
   const byMaturity = new Map<Maturity, BondInstrument>()
-  for (const id of s.order) {
-    const inst = s.instruments[id]
+  for (const id of order) {
+    const inst = instruments[id]
     byMaturity.set(inst.maturity, inst)
   }
   return MATURITY_ORDER.filter((m) => byMaturity.has(m)).map((m) => {
@@ -186,15 +192,16 @@ export function selectYieldCurve(s: MarketState): YieldPoint[] {
 }
 
 /** 10Y–2Y spread in basis points. */
-export function selectSpread10s2s(s: MarketState): number | null {
-  const tenY = Object.values(s.instruments).find((i) => i.maturity === "10Y")
-  const twoY = Object.values(s.instruments).find((i) => i.maturity === "2Y")
+export function computeSpread10s2s(instruments: InstrumentMap): number | null {
+  const list = Object.values(instruments)
+  const tenY = list.find((i) => i.maturity === "10Y")
+  const twoY = list.find((i) => i.maturity === "2Y")
   if (!tenY || !twoY) return null
   return +((tenY.yield - twoY.yield) * 100).toFixed(1)
 }
 
-export function selectAvgYield(s: MarketState): number {
-  const list = Object.values(s.instruments)
+export function computeAvgYield(instruments: InstrumentMap): number {
+  const list = Object.values(instruments)
   if (list.length === 0) return 0
   return +(list.reduce((acc, i) => acc + i.yield, 0) / list.length).toFixed(3)
 }
