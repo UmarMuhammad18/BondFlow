@@ -2,17 +2,20 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, FileText, Settings } from "lucide-react"
+import { LayoutDashboard, Home, Info, Settings, Keyboard } from "lucide-react"
+import { useUiStore } from "@/lib/store/uiStore"
 import { cn } from "@/lib/utils"
 
 const NAV = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/docs", label: "Docs", icon: FileText },
+  { href: "/terminal", label: "Terminal", icon: LayoutDashboard },
+  { href: "/about", label: "About", icon: Info },
   { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/", label: "Home", icon: Home },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
+  const toggleShortcuts = useUiStore((s) => s.toggleShortcuts)
 
   return (
     <nav
@@ -40,6 +43,15 @@ export function Sidebar() {
           </Link>
         )
       })}
+
+      <button
+        onClick={toggleShortcuts}
+        title="Keyboard shortcuts (?)"
+        className="mt-auto flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <Keyboard className="h-5 w-5" />
+        <span className="sr-only">Keyboard shortcuts</span>
+      </button>
     </nav>
   )
 }

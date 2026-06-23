@@ -1,8 +1,9 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import { Ticket } from "lucide-react"
 import { useMarketStore, computeInstrumentList } from "@/lib/store/marketStore"
+import { useOrderStore } from "@/lib/store/orderStore"
 import { useToastStore } from "@/lib/store/toastStore"
 import type { OrderType, Side } from "@/lib/types"
 import { Panel } from "@/components/shared/panel"
@@ -26,12 +27,21 @@ export function OrderTicket() {
   const submitOrder = useMarketStore((s) => s.submitOrder)
   const push = useToastStore((s) => s.push)
 
-  const [side, setSide] = useState<Side>("BUY")
-  const [type, setType] = useState<OrderType>("MARKET")
-  const [instrumentId, setInstrumentId] = useState(instruments[0]?.id ?? "")
-  const [quantity, setQuantity] = useState("1000000")
-  const [limitPrice, setLimitPrice] = useState("")
+  // Draft form state lives in the shared order store so it can be driven by the
+  // watchlist (click to load) and the global keyboard-shortcut handler.
+  const side = useOrderStore((s) => s.side)
+  const type = useOrderStore((s) => s.type)
+  const instrumentId = useOrderStore((s) => s.instrumentId)
+  const quantity = useOrderStore((s) => s.quantity)
+  const limitPrice = useOrderStore((s) => s.limitPrice)
+  const setSide = useOrderStore((s) => s.setSide)
+  const setType = useOrderStore((s) => s.setType)
+  const setInstrument = useOrderStore((s) => s.setInstrument)
+  const setQuantity = useOrderStore((s) => s.setQuantity)
+  const setLimitPrice = useOrderStore((s) => s.setLimitPrice)
+
   const [error, setError] = useState<string | null>(null)
+  const formRef = useRef<HTMLFormElement>(null)
 
   const selected = useMarketStore((s) => s.instruments[instrumentId])
   const ref = useMemo(() => {
@@ -61,7 +71,7 @@ export function OrderTicket() {
 
   return (
     <Panel title="Order Ticket" icon={<Ticket className="h-4 w-4" />}>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3 p-3">
+      <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-3 p-3">
         {/* Side toggle */}
         <div className="grid grid-cols-2 gap-2" role="group" aria-label="Order side">
           <Button
@@ -84,7 +94,7 @@ export function OrderTicket() {
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="ot-instrument">Instrument</Label>
-          <Select value={instrumentId} onValueChange={setInstrumentId}>
+          <Select value={instrumentId} onValueChange={setInstrument}>
             <SelectTrigger id="ot-instrument">
               <SelectValue placeholder="Select instrument" />
             </SelectTrigger>

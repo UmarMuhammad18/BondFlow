@@ -3,7 +3,10 @@
 import { useEffect, useRef, useState } from "react"
 import { ArrowDown, ArrowUp, List } from "lucide-react"
 import { useMarketStore } from "@/lib/store/marketStore"
+import { useOrderStore } from "@/lib/store/orderStore"
 import { Panel } from "@/components/shared/panel"
+import { Sparkline } from "@/components/shared/sparkline"
+import { Skeleton } from "@/components/ui/skeleton"
 import { fmtPrice, fmtYield, fmtChange, fmtPct } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
@@ -13,6 +16,9 @@ import { cn } from "@/lib/utils"
  */
 function WatchlistRow({ id }: { id: string }) {
   const inst = useMarketStore((s) => s.instruments[id])
+  const history = useMarketStore((s) => s.priceHistory[id])
+  const setInstrument = useOrderStore((s) => s.setInstrument)
+  const selectedId = useOrderStore((s) => s.instrumentId)
   const [flash, setFlash] = useState<"up" | "down" | null>(null)
   const lastMid = useRef(inst.mid)
 
@@ -25,12 +31,29 @@ function WatchlistRow({ id }: { id: string }) {
   }, [inst.mid])
 
   const up = inst.change >= 0
+  const selected = selectedId === id
 
   return (
-    <tr className="border-b border-border/60 transition-colors hover:bg-accent/40">
+    <tr
+      onClick={() => setInstrument(id)}
+      className={cn(
+        "cursor-pointer border-b border-border/60 transition-colors hover:bg-accent/40",
+        selected && "bg-primary/5",
+      )}
+    >
       <td className="px-3 py-2">
-        <div className="font-medium text-foreground">{inst.ticker}</div>
-        <div className="text-[11px] text-muted-foreground">{inst.maturity} · {inst.coupon.toFixed(2)}%</div>
+        <div className="flex items-center gap-2">
+          {selected && <span className="h-3 w-0.5 rounded-full bg-primary" aria-hidden />}
+          <div>
+            <div className="font-medium text-foreground">{inst.ticker}</div>
+            <div className="text-[11px] text-muted-foreground">
+              {inst.maturity} · {inst.coupon.toFixed(2)}%
+            </div>
+          </div>
+        </div>
+      </td>
+      <td className="hidden px-3 py-2 sm:table-cell">
+        <Sparkline data={history ?? []} tone={up ? "up" : "down"} className="ml-auto" />
       </td>
       <td className="px-3 py-2 text-right tnum text-down">{fmtPrice(inst.bid)}</td>
       <td className="px-3 py-2 text-right tnum text-up">{fmtPrice(inst.ask)}</td>
@@ -55,8 +78,32 @@ function WatchlistRow({ id }: { id: string }) {
   )
 }
 
+function SkeletonRows() {
+  return (
+    <>
+      {[0, 1, 2, 3].map((i) => (
+        <tr key={i} className="border-b border-border/60">
+          <td className="px-3 py-3">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="mt-1.5 h-2 w-20" />
+          </td>
+          <td className="hidden px-3 py-3 sm:table-cell">
+            <Skeleton className="ml-auto h-5 w-[64px]" />
+          </td>
+          {[0, 1, 2, 3, 4].map((j) => (
+            <td key={j} className="px-3 py-3">
+              <Skeleton className="ml-auto h-3 w-12" />
+            </td>
+          ))}
+        </tr>
+      ))}
+    </>
+  )
+}
+
 export function Watchlist() {
   const order = useMarketStore((s) => s.order)
+  const ready = useMarketStore((s) => s.ready)
 
   return (
     <Panel title="Market Overview" icon={<List className="h-4 w-4" />}>
@@ -64,6 +111,7 @@ export function Watchlist() {
         <thead className="sticky top-0 z-10 bg-card">
           <tr className="border-b border-border text-[11px] uppercase tracking-wider text-muted-foreground">
             <th className="px-3 py-2 text-left font-medium">Instrument</th>
+            <th className="hidden px-3 py-2 text-right font-medium sm:table-cell">Trend</th>
             <th className="px-3 py-2 text-right font-medium">Bid</th>
             <th className="px-3 py-2 text-right font-medium">Ask</th>
             <th className="px-3 py-2 text-right font-medium">Mid</th>
@@ -72,9 +120,7 @@ export function Watchlist() {
           </tr>
         </thead>
         <tbody>
-          {order.map((id) => (
-            <WatchlistRow key={id} id={id} />
-          ))}
+          {ready ? order.map((id) => <WatchlistRow key={id} id={id} />) : <SkeletonRows />}
         </tbody>
       </table>
     </Panel>

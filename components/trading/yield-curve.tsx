@@ -13,6 +13,7 @@ import {
 import { Activity } from "lucide-react"
 import { useMarketStore, computeYieldCurve, computeSpread10s2s, computeAvgYield } from "@/lib/store/marketStore"
 import { Panel } from "@/components/shared/panel"
+import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 
 interface CurveDatum {
@@ -56,6 +57,7 @@ export function YieldCurve() {
   const instruments = useMarketStore((s) => s.instruments)
   const order = useMarketStore((s) => s.order)
   const volatility = useMarketStore((s) => s.volatility)
+  const ready = useMarketStore((s) => s.ready)
 
   const curve = useMemo(() => computeYieldCurve(instruments, order), [instruments, order])
   const spread = useMemo(() => computeSpread10s2s(instruments), [instruments])
@@ -69,6 +71,21 @@ export function YieldCurve() {
   const yields = data.map((d) => d.yield)
   const min = Math.floor(Math.min(...yields) * 10) / 10 - 0.1
   const max = Math.ceil(Math.max(...yields) * 10) / 10 + 0.1
+
+  if (!ready) {
+    return (
+      <Panel title="Yield Curve" icon={<Activity className="h-4 w-4" />}>
+        <div className="flex h-full flex-col p-3">
+          <div className="mb-3 flex gap-6">
+            <Skeleton className="h-8 w-24" />
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-20" />
+          </div>
+          <Skeleton className="min-h-0 flex-1" />
+        </div>
+      </Panel>
+    )
+  }
 
   return (
     <Panel title="Yield Curve" icon={<Activity className="h-4 w-4" />}>

@@ -1,8 +1,9 @@
 "use client"
 
-import { Pause, Play } from "lucide-react"
+import { Pause, Play, Radio, Wifi } from "lucide-react"
 import { useMarketStore } from "@/lib/store/marketStore"
 import type { VolatilityMode } from "@/lib/types"
+import type { FeedMode } from "@/lib/marketData/feed"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -20,6 +21,10 @@ export function EngineControls() {
   const setVolatility = useMarketStore((s) => s.setVolatility)
   const intervalMs = useMarketStore((s) => s.intervalMs)
   const setIntervalMs = useMarketStore((s) => s.setIntervalMs)
+  const feedMode = useMarketStore((s) => s.feedMode)
+  const setFeedMode = useMarketStore((s) => s.setFeedMode)
+
+  const isWebSocket = feedMode === "WEBSOCKET"
 
   return (
     <div className="flex items-center gap-2">
@@ -27,6 +32,7 @@ export function EngineControls() {
         variant="outline"
         size="sm"
         onClick={() => setRunning(!running)}
+        disabled={isWebSocket}
         className="gap-1.5"
         aria-pressed={running}
       >
@@ -34,7 +40,11 @@ export function EngineControls() {
         {running ? "Pause" : "Resume"}
       </Button>
 
-      <Select value={volatility} onValueChange={(v) => setVolatility(v as VolatilityMode)}>
+      <Select
+        value={volatility}
+        onValueChange={(v) => setVolatility(v as VolatilityMode)}
+        disabled={isWebSocket}
+      >
         <SelectTrigger className="h-8 w-[112px] text-xs" aria-label="Volatility mode">
           <SelectValue />
         </SelectTrigger>
@@ -45,25 +55,47 @@ export function EngineControls() {
         </SelectContent>
       </Select>
 
-      <Select value={String(intervalMs)} onValueChange={(v) => setIntervalMs(Number(v))}>
-        <SelectTrigger className="h-8 w-[96px] text-xs" aria-label="Update interval">
+      <Select
+        value={String(intervalMs)}
+        onValueChange={(v) => setIntervalMs(Number(v))}
+        disabled={isWebSocket}
+      >
+        <SelectTrigger className="h-8 w-[104px] text-xs" aria-label="Update interval">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="200">200 ms</SelectItem>
-          <SelectItem value="350">350 ms</SelectItem>
-          <SelectItem value="500">500 ms</SelectItem>
+          <SelectItem value="150">Fast · 150ms</SelectItem>
+          <SelectItem value="400">Normal · 400ms</SelectItem>
+          <SelectItem value="800">Slow · 800ms</SelectItem>
         </SelectContent>
       </Select>
 
-      <span className="flex items-center gap-1.5 text-xs text-muted-foreground" aria-live="polite">
+      <Select value={feedMode} onValueChange={(v) => setFeedMode(v as FeedMode)}>
+        <SelectTrigger className="h-8 w-[128px] text-xs" aria-label="Data feed source">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="SIMULATION">Simulated Feed</SelectItem>
+          <SelectItem value="WEBSOCKET">Live Feed (WS)</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <span
+        className="flex items-center gap-1.5 text-xs text-muted-foreground"
+        aria-live="polite"
+      >
+        {isWebSocket ? (
+          <Wifi className="h-3.5 w-3.5 text-muted-foreground" />
+        ) : (
+          <Radio className={cn("h-3.5 w-3.5", running && "text-up")} />
+        )}
         <span
           className={cn(
             "h-2 w-2 rounded-full",
-            running ? "animate-pulse bg-up" : "bg-muted-foreground",
+            isWebSocket ? "bg-muted-foreground" : running ? "animate-pulse bg-up" : "bg-muted-foreground",
           )}
         />
-        {running ? "Live" : "Paused"}
+        {isWebSocket ? "Awaiting WS" : running ? "Live" : "Paused"}
       </span>
     </div>
   )

@@ -1,6 +1,9 @@
 import type { MarketFeed, TickListener } from "./feed"
 import type { VolatilityMode } from "@/lib/types"
 
+/** Where a real venue feed URL would be read from once integrated. */
+export const WS_PLACEHOLDER_URL = "NEXT_PUBLIC_FEED_URL"
+
 /**
  * WebSocketFeed (placeholder)
  * ---------------------------

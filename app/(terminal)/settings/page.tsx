@@ -70,9 +70,9 @@ export default function SettingsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="200">200 ms</SelectItem>
-                <SelectItem value="350">350 ms</SelectItem>
-                <SelectItem value="500">500 ms</SelectItem>
+                <SelectItem value="150">Fast · 150 ms</SelectItem>
+                <SelectItem value="400">Normal · 400 ms</SelectItem>
+                <SelectItem value="800">Slow · 800 ms</SelectItem>
               </SelectContent>
             </Select>
           </div>
