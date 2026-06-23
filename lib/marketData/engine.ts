@@ -1,4 +1,5 @@
 import type { BondInstrument, MarketTick, VolatilityMode, PriceDirection } from "@/lib/types"
+import type { MarketFeed, TickListener } from "./feed"
 
 /**
  * MarketDataEngine
@@ -33,8 +34,6 @@ const DURATION: Record<string, number> = {
   "30Y": 17.5,
 }
 
-type TickListener = (ticks: MarketTick[]) => void
-
 interface EngineState {
   mid: number
   yield: number
@@ -46,7 +45,7 @@ export interface EngineOptions {
   volatility?: VolatilityMode
 }
 
-export class MarketDataEngine {
+export class MarketDataEngine implements MarketFeed {
   private instruments: BondInstrument[]
   private state = new Map<string, EngineState>()
   private listeners = new Set<TickListener>()

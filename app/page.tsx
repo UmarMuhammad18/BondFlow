@@ -1,32 +1,32 @@
-import { Positions } from "@/components/trading/positions"
-import { Watchlist } from "@/components/trading/watchlist"
-import { YieldCurve } from "@/components/trading/yield-curve"
-import { OrderTicket } from "@/components/trading/order-ticket"
-import { Blotter } from "@/components/trading/blotter"
+import type { Metadata } from "next"
+import { LandingNav } from "@/components/landing/landing-nav"
+import { Hero } from "@/components/landing/hero"
+import { FeatureGrid } from "@/components/landing/feature-grid"
+import { LivePreview } from "@/components/landing/live-preview"
+import { ArchitectureSection } from "@/components/landing/architecture-section"
+import { TradewebSection } from "@/components/landing/tradeweb-section"
+import { AboutProject } from "@/components/landing/about-project"
+import { LandingFooter } from "@/components/landing/landing-footer"
 
-export default function DashboardPage() {
+export const metadata: Metadata = {
+  title: "BondFlow — Real-Time Fixed-Income Trading Terminal",
+  description:
+    "A professional-grade simulation of institutional bond trading workflows: live market data, yield curve analytics, order execution, a streaming blotter, and positions & P&L tracking.",
+}
+
+export default function LandingPage() {
   return (
-    <div className="flex h-full flex-col">
-      <Positions />
-      {/*
-        Trading grid: on large screens a 12-col / 2-row layout
-        (overview + curve on top, ticket + blotter below). Stacks vertically on
-        small screens for responsiveness.
-      */}
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-auto p-3 lg:grid-cols-12 lg:grid-rows-2 lg:overflow-hidden">
-        <div className="min-h-[300px] lg:col-span-7 lg:row-span-1 lg:min-h-0">
-          <Watchlist />
-        </div>
-        <div className="min-h-[300px] lg:col-span-5 lg:row-span-1 lg:min-h-0">
-          <YieldCurve />
-        </div>
-        <div className="min-h-[420px] lg:col-span-4 lg:row-span-1 lg:min-h-0">
-          <OrderTicket />
-        </div>
-        <div className="min-h-[420px] lg:col-span-8 lg:row-span-1 lg:min-h-0">
-          <Blotter />
-        </div>
-      </div>
+    <div className="min-h-dvh bg-background">
+      <LandingNav />
+      <main>
+        <Hero />
+        <FeatureGrid />
+        <LivePreview />
+        <ArchitectureSection />
+        <TradewebSection />
+        <AboutProject />
+      </main>
+      <LandingFooter />
     </div>
   )
 }

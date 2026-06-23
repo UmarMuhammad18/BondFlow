@@ -100,3 +100,38 @@
     font-feature-settings: "tnum";
   }
 }
+
+@layer utilities {
+  /* Glassy, slightly translucent surface for depth. */
+  .glass {
+    background-color: color-mix(in oklab, var(--card) 70%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Subtle moving grid used on the landing hero background. */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, color-mix(in oklab, var(--border) 60%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklab, var(--border) 60%, transparent) 1px, transparent 1px);
+    background-size: 48px 48px;
+    animation: grid-pan 24s linear infinite;
+  }
+
+  /* Radial cyan/purple glow blobs for the hero. */
+  .glow-primary {
+    background: radial-gradient(circle at center, var(--primary) 0%, transparent 70%);
+  }
+  .glow-accent {
+    background: radial-gradient(circle at center, var(--chart-5) 0%, transparent 70%);
+  }
+}
+
+@keyframes grid-pan {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 48px 48px;
+  }
+}

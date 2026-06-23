@@ -10,8 +10,12 @@ import type {
   Maturity,
 } from "@/lib/types"
 import { SEED_INSTRUMENTS } from "@/lib/marketData/instruments"
+import type { FeedMode } from "@/lib/marketData/feed"
 
 const MATURITY_ORDER: Maturity[] = ["2Y", "5Y", "10Y", "30Y"]
+
+/** Number of recent mid prices retained per instrument for sparklines. */
+const HISTORY_LEN = 40
 
 export interface OrderResult {
   ok: boolean
@@ -26,11 +30,17 @@ interface MarketState {
   order: string[]
   trades: Trade[]
   positions: Record<string, Position>
+  /** Bounded ring buffer of recent mid prices per instrument, for sparklines. */
+  priceHistory: Record<string, number[]>
 
   // Engine settings (UI-controlled, consumed by the engine provider).
   volatility: VolatilityMode
   intervalMs: number
   running: boolean
+  /** Active market data source. */
+  feedMode: FeedMode
+  /** True once the first batch of ticks has been applied (gates skeletons). */
+  ready: boolean
 
   // Actions
   applyTicks: (ticks: MarketTick[]) => void
@@ -38,16 +48,19 @@ interface MarketState {
   setVolatility: (mode: VolatilityMode) => void
   setIntervalMs: (ms: number) => void
   setRunning: (running: boolean) => void
+  setFeedMode: (mode: FeedMode) => void
 }
 
 function buildInitial() {
   const instruments: Record<string, BondInstrument> = {}
+  const priceHistory: Record<string, number[]> = {}
   const order: string[] = []
   for (const inst of SEED_INSTRUMENTS) {
     instruments[inst.id] = { ...inst }
+    priceHistory[inst.id] = [inst.mid]
     order.push(inst.id)
   }
-  return { instruments, order }
+  return { instruments, order, priceHistory }
 }
 
 function uid(prefix: string) {
@@ -59,13 +72,16 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   trades: [],
   positions: {},
   volatility: "MEDIUM",
-  intervalMs: 350,
+  intervalMs: 400,
   running: true,
+  feedMode: "SIMULATION",
+  ready: false,
 
   applyTicks: (ticks) =>
     set((state) => {
       // Apply all ticks in a single immutable update so subscribers re-render once.
       const next = { ...state.instruments }
+      const history = { ...state.priceHistory }
       for (const tick of ticks) {
         const prev = next[tick.instrumentId]
         if (!prev) continue
@@ -81,8 +97,12 @@ export const useMarketStore = create<MarketState>((set, get) => ({
           changePct,
           direction: tick.direction,
         }
+        const series = history[tick.instrumentId] ?? []
+        const appended = series.length >= HISTORY_LEN ? series.slice(1) : series.slice()
+        appended.push(tick.mid)
+        history[tick.instrumentId] = appended
       }
-      return { instruments: next }
+      return { instruments: next, priceHistory: history, ready: true }
     }),
 
   submitOrder: (input) => {
@@ -163,7 +183,18 @@ export const useMarketStore = create<MarketState>((set, get) => ({
   setVolatility: (mode) => set({ volatility: mode }),
   setIntervalMs: (ms) => set({ intervalMs: ms }),
   setRunning: (running) => set({ running }),
+  setFeedMode: (mode) =>
+    set(() =>
+      // Switching to the (placeholder) WebSocket feed freezes the simulation.
+      mode === "WEBSOCKET" ? { feedMode: mode, running: false } : { feedMode: mode, running: true },
+    ),
 }))
+
+/** Compute unrealized P&L for a position given the current mark.
+ *  Quantity is face value; price is per 100 face, so P&L = (mark - avg) * qty/100. */
+export function computeUnrealizedPnl(netQuantity: number, avgPrice: number, mark: number): number {
+  return (mark - avgPrice) * (netQuantity / 100)
+}
 
 /* ----------------------------- Derived helpers ----------------------------- *
  * These are pure functions over raw state slices. Components subscribe to the
