@@ -28,6 +28,7 @@
   --color-up-foreground: var(--up-foreground);
   --color-down: var(--down);
   --color-down-foreground: var(--down-foreground);
+  --color-warn: var(--warn);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -77,6 +78,7 @@
   --up-foreground: oklch(0.16 0.02 250);
   --down: oklch(0.62 0.21 22);
   --down-foreground: oklch(0.98 0.01 240);
+  --warn: oklch(0.8 0.14 85);
 
   --chart-1: oklch(0.75 0.13 195);
   --chart-2: oklch(0.72 0.17 155);
@@ -98,5 +100,40 @@
   .tnum {
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
+  }
+}
+
+@layer utilities {
+  /* Glassy, slightly translucent surface for depth. */
+  .glass {
+    background-color: color-mix(in oklab, var(--card) 70%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Subtle moving grid used on the landing hero background. */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, color-mix(in oklab, var(--border) 60%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklab, var(--border) 60%, transparent) 1px, transparent 1px);
+    background-size: 48px 48px;
+    animation: grid-pan 24s linear infinite;
+  }
+
+  /* Radial cyan/purple glow blobs for the hero. */
+  .glow-primary {
+    background: radial-gradient(circle at center, var(--primary) 0%, transparent 70%);
+  }
+  .glow-accent {
+    background: radial-gradient(circle at center, var(--chart-5) 0%, transparent 70%);
+  }
+}
+
+@keyframes grid-pan {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 48px 48px;
   }
 }
