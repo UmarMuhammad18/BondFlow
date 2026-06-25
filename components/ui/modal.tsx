@@ -10,6 +10,7 @@ interface ModalProps {
   open: boolean
   onClose: () => void
   title?: string
+  description?: string
   children: React.ReactNode
   className?: string
 }
@@ -18,7 +19,7 @@ interface ModalProps {
  * A lightweight, dependency-free modal with a backdrop, focus trap-lite (Escape
  * to close), scroll lock, and Framer Motion enter/exit transitions.
  */
-export function Modal({ open, onClose, title, children, className }: ModalProps) {
+export function Modal({ open, onClose, title, description, children, className }: ModalProps) {
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
@@ -63,8 +64,11 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
             )}
           >
             {title && (
-              <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+              <div className="flex items-start justify-between gap-4 border-b border-border px-4 py-3">
+                <div className="flex flex-col gap-0.5">
+                  <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+                  {description && <p className="text-xs text-muted-foreground">{description}</p>}
+                </div>
                 <button
                   onClick={onClose}
                   className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
